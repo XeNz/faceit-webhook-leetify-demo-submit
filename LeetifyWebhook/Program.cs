@@ -16,23 +16,26 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 
 builder.Services.AddHttpClient<FaceitService>();
 builder.Services.AddHttpClient<LeetifyService>();
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
 
-var todosApi = app.MapGroup("/leetify");
-todosApi.MapPost("/webhook", async (
-    [FromBody] FaceitWebhookRequest request,
-    [FromServices] LeetifyService leetifyService,
-    [FromServices] FaceitService faceitService
-) =>
-{
-    var demoInformation = await faceitService.DownloadDemoInformation(request.Payload.DemoUrl);
-    var loginResponse = await leetifyService.LogIn();
-    await leetifyService.SubmitDemoUrl(loginResponse.Token, demoInformation.Payload.DownloadUrl);
+var api = app.MapGroup("/leetify")
+    .MapPost("/webhook", async (
+        [FromBody] FaceitWebhookRequest request,
+        [FromServices] LeetifyService leetifyService,
+        [FromServices] FaceitService faceitService
+    ) =>
+    {
+        var demoInformation = await faceitService.DownloadDemoInformation(request.Payload.DemoUrl);
+        var loginResponse = await leetifyService.LogIn();
+        await leetifyService.SubmitDemoUrl(loginResponse.Token, demoInformation.Payload.DownloadUrl);
 
-    return TypedResults.Accepted((string?)null);
-});
+        return TypedResults.Accepted((string?)null);
+    });
+
+app.MapHealthChecks("/health");
 app.Run();
 
 
