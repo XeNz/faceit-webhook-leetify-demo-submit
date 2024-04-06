@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LeetifyWebhook", "LeetifyWebhook\LeetifyWebhook.csproj", "{DB94B02A-62F8-4DFE-81FD-5ADF96B2C0BE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LeetifyWebhook", "LeetifyWebhook.csproj", "{DB94B02A-62F8-4DFE-81FD-5ADF96B2C0BE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
