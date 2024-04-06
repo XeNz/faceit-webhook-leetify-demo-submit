@@ -10,7 +10,6 @@ RUN dotnet publish -c Release -r linux-x64 -o out LeetifyWebhook.csproj
 FROM mcr.microsoft.com/dotnet/runtime-deps:8.0-jammy-chiseled AS runtime
 WORKDIR /app
 COPY --from=build /app/out/LeetifyWebhook /app/
-ENV ASPNETCORE_URLS="https://+;http://+"
-EXPOSE 443
-EXPOSE 80
+
+EXPOSE 8080
 ENTRYPOINT ["/app/LeetifyWebhook"]  
