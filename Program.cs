@@ -84,21 +84,28 @@ public record ApplicationSettings
 public class FaceitService
 {
     private readonly HttpClient _httpClient;
+    private readonly ILogger<FaceitService> _logger;
 
-    public FaceitService(HttpClient httpClient, IOptions<ApplicationSettings> applicationSettings)
+    public FaceitService(HttpClient httpClient, IOptions<ApplicationSettings> applicationSettings,
+        ILogger<FaceitService> logger)
     {
         _httpClient = httpClient;
+        _logger = logger;
         _httpClient.BaseAddress = new Uri(applicationSettings.Value.FaceitUrl);
     }
 
     public async Task<FaceitDemoResponse> DownloadDemoInformation(string resourceUri)
     {
+        _logger.LogInformation("Attempting to get demo URL with resourceUri {ResourceUri}", resourceUri);
         var response = await _httpClient.PostAsJsonAsync(
             "/download/v2/demos/download-url",
             new FaceitDemoRequest(resourceUri),
             AppJsonSerializerContext.Default.FaceitDemoRequest);
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync(AppJsonSerializerContext.Default.FaceitDemoResponse))!;
+        var responseBody =
+            (await response.Content.ReadFromJsonAsync(AppJsonSerializerContext.Default.FaceitDemoResponse))!;
+        _logger.LogInformation("Got download URL: {DownloadUrl}", responseBody.Payload.DownloadUrl);
+        return responseBody;
     }
 }
 
@@ -106,22 +113,31 @@ public class LeetifyService
 {
     private readonly HttpClient _httpClient;
     private readonly IOptions<ApplicationSettings> _applicationSettings;
+    private readonly ILogger<LeetifyService> _logger;
 
-    public LeetifyService(HttpClient httpClient, IOptions<ApplicationSettings> applicationSettings)
+    public LeetifyService(
+        HttpClient httpClient,
+        IOptions<ApplicationSettings> applicationSettings,
+        ILogger<LeetifyService> logger
+    )
     {
         _httpClient = httpClient;
         _applicationSettings = applicationSettings;
+        _logger = logger;
         _httpClient.BaseAddress = new Uri(applicationSettings.Value.LeetifyUrl);
     }
 
     public async Task<LeetifyLoginResponse> LogIn()
     {
         var (_, _, username, password) = _applicationSettings.Value;
+        _logger.LogInformation("Logging in for user {Username}", username);
         var body = new LeetifyLoginRequest(username, password);
         var response =
             await _httpClient.PostAsJsonAsync("/login", body, AppJsonSerializerContext.Default.LeetifyLoginRequest);
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync(AppJsonSerializerContext.Default.LeetifyLoginResponse))!;
+        var responseBody = (await response.Content.ReadFromJsonAsync(AppJsonSerializerContext.Default.LeetifyLoginResponse))!;
+        _logger.LogInformation("Got Leetify token {Token}", responseBody.Token);
+        return responseBody;
     }
 
     public async Task SubmitDemoUrl(string token, string downloadUrl)
@@ -137,6 +153,7 @@ public class LeetifyService
         httpRequestMessage.Content = new StringContent(json, Encoding.UTF8);
         httpRequestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
+        _logger.LogInformation("Sending {DownloadUrl} to leetify", downloadUrl);
         var response = await _httpClient.SendAsync(httpRequestMessage);
         response.EnsureSuccessStatusCode();
     }
